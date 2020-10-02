@@ -18,6 +18,7 @@ import {
   NotificationTypeIO,
 } from "../types";
 import Axios from "axios";
+import { toNotificationType } from "../utils";
 
 function createFakeNotification(nt: NotificationType): NotificationX {
   switch (nt) {
@@ -41,11 +42,7 @@ function createFakeNotification(nt: NotificationType): NotificationX {
   }
 }
 
-function toNotificationType(
-  str: string
-): Either<ServerError, NotificationType> {
-  return mapLeft((_) => badReq)(NotificationTypeIO.decode(str));
-}
+
 
 // TODO: modify this later on from send notification = send notification => catch if it fails and do something => do something if it succeeds
 function sendFakeNotification(props: {

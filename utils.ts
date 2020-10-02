@@ -12,11 +12,25 @@ import {
   fold,
   tryCatch,
   Json,
+  mapLeft,
 } from "fp-ts/lib/Either";
-import { AppM, internalErr, ServerError } from "./types";
+import {
+  AppM,
+  badReq,
+  internalErr,
+  NotificationType,
+  NotificationTypeIO,
+  ServerError,
+} from "./types";
 import { Response } from "express";
 
 type HttpOut = { status: number; body: Json };
+
+export function toNotificationType(
+  str: string
+): Either<ServerError, NotificationType> {
+  return mapLeft((_) => badReq)(NotificationTypeIO.decode(str));
+}
 
 export function sendOut(res: Response, payload: HttpOut) {
   res.status(payload.status);

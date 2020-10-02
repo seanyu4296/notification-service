@@ -14,9 +14,6 @@ export const CustomerApiKeyCreateIO = t.type({
 
 type CustomerApiKeyCreate = t.TypeOf<typeof CustomerApiKeyCreateIO>;
 
-// TODO: sepearate out all these chains
-//
-
 export function getPayload(payload: Json): AppM<CustomerApiKeyCreate> {
   return TE.fromEither(
     mapLeft((_) => badReq)(CustomerApiKeyCreateIO.decode(payload))

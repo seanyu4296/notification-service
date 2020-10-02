@@ -48,7 +48,9 @@ export const CustomerNotificationE = new Entity({
   attributes: {
     customerId: { partitionKey: true, prefix: "CUSTOMER#" },
     notificationId: { sortKey: true, prefix: "NOTIF#" },
-    payload: { type: "map" },
+    notification: { type: "map" },
+//    attempts:
+// received
   },
   table: NotificationTable,
 });
