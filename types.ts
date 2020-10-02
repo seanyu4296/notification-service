@@ -3,9 +3,33 @@ import * as t from "io-ts";
 
 // Notification Types
 
+export const NotificationTypeIO = new t.Type<NotificationType, string, unknown>(
+  "NotificationType",
+  (input: unknown): input is NotificationType => {
+    switch (input) {
+      case "PaymentFailedNotification":
+      case "PaymentCreatedNotification":
+        return true;
+      default:
+        return false;
+    }
+  },
+  (input, context) => {
+    switch (input) {
+      case "PaymentFailedNotification":
+      case "PaymentCreatedNotification":
+        return t.success(input);
+      default:
+        return t.failure(input, context);
+    }
+  },
+  t.identity
+);
+
 export type NotificationType =
   | "PaymentFailedNotification"
   | "PaymentCreatedNotification";
+
 export const notificationTypes: NotificationType[] = [
   "PaymentFailedNotification",
   "PaymentCreatedNotification",
@@ -53,6 +77,9 @@ export interface InternalError {
 export interface Unauthorized {
   _tag: "Unauthorized";
 }
+export interface CallbackTimeout {
+  _tag: "CallbackTimeout";
+}
 
 export const badReq: ServerError = {
   _tag: "BadRequest",
@@ -64,6 +91,19 @@ export const unauth: ServerError = {
   _tag: "Unauthorized",
 };
 
-export type ServerError = BadRequest | InternalError | Unauthorized;
+export const callbackTimeout: ServerError = {
+  _tag: "CallbackTimeout",
+};
+
+export interface Customer {
+  customerId: string;
+  apiKey: string;
+}
+
+export type ServerError =
+  | BadRequest
+  | InternalError
+  | Unauthorized
+  | CallbackTimeout;
 
 export type AppM<O> = TaskEither<ServerError, O>;

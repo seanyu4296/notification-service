@@ -1,12 +1,9 @@
 import { Task } from "fp-ts/lib/Task";
 import { TaskEither } from "fp-ts/lib/TaskEither";
 import * as t from "io-ts";
-import {
-  CustomerApiKeyE,
-  CustomerNotifCallbackE,
-  NotificationTable,
-} from "../db/db";
 import * as TE from "fp-ts/lib/TaskEither";
+import * as CustomerNotifCallbackDB from "../db/CustomerNotifCallback";
+import * as E from "fp-ts/lib/Either";
 import { flow, pipe } from "fp-ts/lib/function";
 import { Either, Json, mapLeft, right, left } from "fp-ts/lib/Either";
 import {
@@ -17,6 +14,8 @@ import {
   NotificationX,
   NotificationType,
   unauth,
+  callbackTimeout,
+  NotificationTypeIO,
 } from "../types";
 import Axios from "axios";
 
@@ -42,69 +41,85 @@ function createFakeNotification(nt: NotificationType): NotificationX {
   }
 }
 
-function toNotificationType(str: string): AppM<NotificationType> {
-  switch (str) {
-    case "PaymentFailedNotification":
-      return TE.fromEither(right(str));
-    case "PaymentCreatedNotification":
-      return TE.fromEither(right(str));
-    default:
-      return TE.fromEither(left(badReq));
-  }
+function toNotificationType(
+  str: string
+): Either<ServerError, NotificationType> {
+  return mapLeft((_) => badReq)(NotificationTypeIO.decode(str));
 }
 
-function sendFakeNotification(
-  callbackUrl: string,
-  notification: NotificationX
-): AppM<{}> {
+// TODO: modify this later on from send notification = send notification => catch if it fails and do something => do something if it succeeds
+function sendFakeNotification(props: {
+  notification: NotificationX;
+  callbackUrl: string;
+}): AppM<{}> {
   return TE.tryCatch(
-    () => Axios.post(callbackUrl, notification),
-    () => internalErr
+    () => Axios.post(props.callbackUrl, props.notification),
+    () => callbackTimeout
   );
 }
 
-export function createTestNotification(
-  apiKey: string,
-  notificationType: string,
-  callbackUrl: string
-): AppM<{}> {
-  const fakeNotification: AppM<NotificationX> = pipe(
-    notificationType,
-    toNotificationType,
-    TE.map(createFakeNotification)
+const CreateTestNoificationIO = t.type({
+  notificationType: t.string,
+  callbackUrl: t.string,
+});
+
+type CreateTestNoification = t.TypeOf<typeof CreateTestNoificationIO>;
+
+export function createTestNotification(payload: Json): AppM<{}> {
+  const p: Either<ServerError, CreateTestNoification> = mapLeft((_) => badReq)(
+    CreateTestNoificationIO.decode(payload)
   );
-
-  const verifyCustomer: AppM<void> = TE.tryCatch(
-    () => {
-      return NotificationTable.query(apiKey, {
-        limit: 1,
-        index: "GSI2",
-      }).then((result) => {
-        if (result && result.Items && result.Items.length) {
-          return;
-        } else {
-          throw new Error("unauthoizedd");
-        }
-      });
-    },
-
-    () => unauth
+  const fakeNotification: Either<
+    ServerError,
+    { notification: NotificationX; callbackUrl: string }
+  > = pipe(
+    p,
+    E.chain(({ notificationType, callbackUrl }) => {
+      return pipe(
+        toNotificationType(notificationType),
+        E.map((notifType) => {
+          return {
+            notification: createFakeNotification(notifType),
+            callbackUrl,
+          };
+        })
+      );
+    })
   );
 
   return pipe(
-    verifyCustomer,
-    TE.chain((_) => fakeNotification),
-    TE.chain((notif) => sendFakeNotification(callbackUrl, notif)),
-    TE.chain((_) => TE.of({}))
+    TE.fromEither(fakeNotification),
+    TE.chain(sendFakeNotification),
+    TE.apSecond(TE.of({}))
   );
 }
 
-// let result = await NotificationTable.query(apiKey, {
-//   limit: 1,
-//   index: "GSI2",
-// });
-// if (result && result.Items && result.Items.length) {
-//   return;
-// } else {
-//   throw new Error("unauthoizedd");
-// }
+// Register Callback
+const RegisterCallbackIO = t.type({
+  callbackUrl: t.string,
+  notificationType: NotificationTypeIO,
+});
+
+type RegisterCallback = t.TypeOf<typeof RegisterCallbackIO>;
+
+export function getRegisterCallback(
+  payload: Json
+): Either<ServerError, RegisterCallback> {
+  return mapLeft((_) => badReq)(RegisterCallbackIO.decode(payload));
+}
+
+export function registerCallback(customerId: string, payload: Json) {
+  return pipe(
+    TE.fromEither(getRegisterCallback(payload)),
+    TE.chain(({ callbackUrl, notificationType }) =>
+      CustomerNotifCallbackDB.registerCallback({
+        callbackUrl,
+        notificationType,
+        customerId,
+      })
+    )
+  );
+}
+
+// TODO: create an authorization function that returns customer id
+// TODO: a service can send a notification

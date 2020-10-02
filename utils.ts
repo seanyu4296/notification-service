@@ -24,7 +24,7 @@ export function sendOut(res: Response, payload: HttpOut) {
 }
 
 export async function runAppM<R>(te: AppM<R>): Promise<HttpOut> {
-  const x: Either<ServerError, R> = await te();
+  const result: Either<ServerError, R> = await te();
   return fold(
     (l: ServerError) => {
       switch (l._tag) {
@@ -34,8 +34,8 @@ export async function runAppM<R>(te: AppM<R>): Promise<HttpOut> {
           return { status: 500, body: {} };
         case "Unauthorized":
           return { status: 401, body: {} };
-        default:
-          return { status: 500, body: {} };
+        case "CallbackTimeout":
+          return { status: 408, body: {} };
       }
     },
     (r: R) => {
@@ -44,8 +44,7 @@ export async function runAppM<R>(te: AppM<R>): Promise<HttpOut> {
         body: r,
       };
     }
-  )(x);
-  //  return x;
+  )(result);
 }
 
 export function generateToken(): AppM<string> {
