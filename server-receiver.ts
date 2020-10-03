@@ -6,7 +6,8 @@ const app: express.Application = express();
 app.use(bodyParser.json());
 
 app.all("*", (req, res) => {
-  console.log(req.body);
+  console.log("HEADERS: ", req.headers);
+  console.log("BODY: ", req.body);
   res.status(200);
   res.send();
 })

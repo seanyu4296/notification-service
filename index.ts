@@ -43,7 +43,7 @@ app.post("/receive-notification", async function(req, res) {
   let result = await runAppM(
     pipe(
       authorize(req.headers),
-      TE.chain(({ customerId }) => CustomerNotification.receiveNotification(customerId, req.body))
+      TE.chain(({ customerId, apiKey }) => CustomerNotification.receiveNotification(customerId, apiKey, req.body))
     )
   );
   sendOut(res, result);

@@ -76,3 +76,7 @@ export function generateToken(): AppM<string> {
     () => internalErr
   );
 }
+
+export function generateHmacSha256(key: string, payload: string): string {
+  return crypto.createHmac('sha256', key).update(payload).digest("base64");
+}

@@ -1,3 +1,5 @@
+import { NotificationType, NotificationX } from "../types";
+
 const { Table, Entity } = require("dynamodb-toolbox");
 var AWS = require("aws-sdk");
 // Set the region
@@ -19,15 +21,15 @@ export const NotificationTable = new Table({
   // Add the DocumentClient
   DocumentClient,
   indexes: {
-    GSI2: { partitionKey: 'apiKey' },
-  }
+    GSI2: { partitionKey: "apiKey" },
+  },
 });
 
 export const CustomerApiKeyE = new Entity({
   name: "CustomerApiKey",
   attributes: {
     customerId: { partitionKey: true, prefix: "CUSTOMER#" },
-    sk: { hidden: true, sortKey: true, default: "APIKEY"},
+    sk: { hidden: true, sortKey: true, default: "APIKEY" },
     apiKey: { type: "string" },
   },
   table: NotificationTable,
@@ -38,10 +40,19 @@ export const CustomerNotifCallbackE = new Entity({
   attributes: {
     customerId: { partitionKey: true, prefix: "CUSTOMER#" },
     notificationType: { sortKey: true, prefix: "CBTYPE#" },
-    callbackUrl: { type: "string", alias: "cbUrl" },
+    callbackUrl: { type: "string" },
   },
   table: NotificationTable,
 });
+
+export interface CustomerNotifCallack {
+  notificationType: NotificationType;
+  callbackUrl: string;
+  entity: string;
+  modified: string;
+  customerId: string;
+  created: string;
+}
 
 export const CustomerNotificationE = new Entity({
   name: "CustomerNotification",
@@ -49,8 +60,19 @@ export const CustomerNotificationE = new Entity({
     customerId: { partitionKey: true, prefix: "CUSTOMER#" },
     notificationId: { sortKey: true, prefix: "NOTIF#" },
     notification: { type: "map" },
-//    attempts:
-// received
+    attempts: { type: "list" },
+    received: { type: "string" },
   },
   table: NotificationTable,
 });
+// TODO: notfication should have better validation
+export interface CustomerNotification {
+  customerId: string;
+  notificationId: string;
+  notification: NotificationX;
+  attempts?: string[];
+  received?: string;
+  entity: string;
+  modified: string;
+  created: string;
+}
