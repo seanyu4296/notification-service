@@ -17,12 +17,14 @@ import {
   PaymentFailedNotifPayloadIO,
   PaymentFailedNotifPayload,
   PaymentCreatedNotifPayload,
+  unauth,
 } from "../types";
 import Axios from "axios";
 import { generateHmacSha256, toNotificationType } from "../utils";
 import { CustomerNotification } from "../db/db";
 
 // TODO: this can have a better generic validator/decoder
+
 export function getNotificationX(payload: Json): AppM<NotificationX> {
   if (payload) {
     let p = (payload || {}) as any;
@@ -114,7 +116,6 @@ export function attemptSendNotification(
 
 export function receiveNotification(
   customerId: string,
-  apiKey: string,
   payload: Json
 ): AppM<{}> {
   return pipe(
@@ -126,6 +127,7 @@ export function receiveNotification(
       return pipe(
         CustomerNotifCallbackDB.getCallbackUrl(customerId, notification.type),
         TE.chain((callbackO) => {
+          console.log(callbackO);
           switch (callbackO._tag) {
             case "None":
               // TODO: not sure if this is correct no callback == failed?? or should we stil save it?
@@ -135,13 +137,21 @@ export function receiveNotification(
           }
         }),
         TE.chain((callbackUrl) => {
-          return attemptSendNotification(
-            apiKey,
-            customerId,
-            notificationId,
-            callbackUrl,
-            notification,
-            attempts
+          return pipe(
+            TE.tryCatch(
+              () => CustomerApiKeyDB.getApiKeyByCustomerId(customerId),
+              (_) => unauth
+            ),
+            TE.chain((apiKey) =>
+              attemptSendNotification(
+                apiKey,
+                customerId,
+                notificationId,
+                callbackUrl,
+                notification,
+                attempts
+              )
+            )
           );
         })
       );
@@ -162,7 +172,7 @@ export function getFailedNotifications(): Task<
 
 export function attemptSendFailNotification(
   customerNotification: CustomerNotification
-): Task<Either<string,CustomerNotification>> {
+): Task<Either<string, CustomerNotification>> {
   return pipe(
     TE.tryCatch(
       () =>
@@ -193,7 +203,7 @@ export function attemptSendFailNotification(
               customerNotification.notificationId,
               callbackUrl,
               customerNotification.notification,
-              customerNotification.attempts,
+              customerNotification.attempts
             )
           );
         })
@@ -202,7 +212,9 @@ export function attemptSendFailNotification(
   );
 }
 
-export function resendNotifications(): Task<Either<{}, Either<string, CustomerNotification>[]>> {
+export function resendNotifications(): Task<
+  Either<{}, Either<string, CustomerNotification>[]>
+> {
   return pipe(
     getFailedNotifications(),
     TE.chain((notifications) => {

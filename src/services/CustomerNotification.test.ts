@@ -1,6 +1,7 @@
 import axios from "axios";
 import MockAdapter from "axios-mock-adapter";
 import { Json } from "fp-ts/lib/Either";
+import { NotificationType } from "../types";
 import { createFakeNotification } from "../utils";
 import { createApiKey } from "./CustomerApiKey";
 import { registerCallback } from "./CustomerNotifCallback";
@@ -8,6 +9,7 @@ import {
   attemptSendFailNotification,
   attemptSendNotification,
   getNotificationX,
+  receiveNotification,
   sendNotification,
 } from "./CustomerNotification";
 
@@ -70,19 +72,17 @@ describe("sendNotification", () => {
 
 describe("Send notification flow", () => {
   it("should mark a notification received if notification is successfully acknowledged", async () => {
-    const apiKey = await createApiKey({ customerId: "test "})();
-    const regCallback = await registerCallback("test", { type: "PaymentFailedNotification", callbackUrl: "http://test.com" });
-    
-    // console.log(result);
-    // const result = await attemptSendNotification(
-    //   "",
-    //   "",
-    //   "",
-    //   "",
-    //   createFakeNotification("PaymentFailedNotification"),
-    //   []
-    // )();
-    // console.log(result);
+    let customerId = "test";
+    let notifType: NotificationType = "PaymentFailedNotification";
+    let callbackUrl = "http://test.com";
+    await createApiKey({ customerId })();
+    await registerCallback(customerId, {
+      notificationType: notifType,
+      callbackUrl,
+    })();
+    mockAxios.onPost(callbackUrl).reply(200, "");
+    const notification = await receiveNotification(customerId, createFakeNotification(notifType) as any)();
+    expect(notification._tag).toBe("Right");
   });
   it("should not send a notification when it reached its attempt limit", async () => {});
 });
