@@ -7,18 +7,19 @@ AWS.config.update({ region: "ap-southeast-1" });
 const DynamoDB = require("aws-sdk/clients/dynamodb");
 const DocumentClient = new DynamoDB.DocumentClient({
   region: "ap-southeast-1",
+  ...(process.env.MOCK_DYNAMODB_ENDPOINT && {
+    endpoint: process.env.MOCK_DYNAMODB_ENDPOINT,
+    sslEnabled: false,
+    region: "local"
+  })
 });
 
-// Instantiate a table
 export const NotificationTable = new Table({
-  // Specify table name (used by DynamoDB)
   name: "xendit-notification-dev",
 
-  // Define partition and sort keys
   partitionKey: "pk",
   sortKey: "sk",
 
-  // Add the DocumentClient
   DocumentClient,
   indexes: {
     GSI2: { partitionKey: "apiKey" },

@@ -9,12 +9,12 @@ import {
 } from "../types";
 import { IncomingHttpHeaders } from "http";
 
-function verifyCustomer(apiKey: string): AppM<Customer> {
+export function verifyCustomer(apiKey: string): AppM<Customer> {
   return TE.tryCatch(
     () => {
       return CustomerApiKeyDB.getApiKey(apiKey);
     },
-    () => unauth
+  () => unauth
   );
 }
 

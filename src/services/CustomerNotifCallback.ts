@@ -1,26 +1,19 @@
-import { Task } from "fp-ts/lib/Task";
-import { TaskEither } from "fp-ts/lib/TaskEither";
 import * as t from "io-ts";
 import * as TE from "fp-ts/lib/TaskEither";
 import * as CustomerNotifCallbackDB from "../db/CustomerNotifCallback";
 import * as E from "fp-ts/lib/Either";
-import { flow, pipe } from "fp-ts/lib/function";
-import { Either, Json, mapLeft, right, left } from "fp-ts/lib/Either";
+import { pipe } from "fp-ts/lib/function";
+import { Either, Json, mapLeft } from "fp-ts/lib/Either";
 import {
   AppM,
   ServerError,
   badReq,
-  internalErr,
   NotificationX,
-  NotificationType,
-  unauth,
   callbackTimeout,
   NotificationTypeIO,
 } from "../types";
 import Axios from "axios";
 import { createFakeNotification, toNotificationType } from "../utils";
-
-
 
 
 // TODO: modify this later on from send notification = send notification => catch if it fails and do something => do something if it succeeds

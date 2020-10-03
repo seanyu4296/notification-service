@@ -10,7 +10,7 @@ export const CustomerApiKeyCreateIO = t.type({
   customerId: t.string,
 });
 
-type CustomerApiKeyCreate = t.TypeOf<typeof CustomerApiKeyCreateIO>;
+export type CustomerApiKeyCreate = t.TypeOf<typeof CustomerApiKeyCreateIO>;
 
 export function getPayload(payload: Json): AppM<CustomerApiKeyCreate> {
   return TE.fromEither(

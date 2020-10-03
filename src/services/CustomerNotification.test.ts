@@ -1,10 +1,19 @@
-import mockAxios from "jest-mock-axios";
+import axios from "axios";
+import MockAdapter from "axios-mock-adapter";
 import { Json } from "fp-ts/lib/Either";
 import { createFakeNotification } from "../utils";
-import { getNotificationX, sendNotification } from "./CustomerNotification";
+import { createApiKey } from "./CustomerApiKey";
+import { registerCallback } from "./CustomerNotifCallback";
+import {
+  attemptSendFailNotification,
+  attemptSendNotification,
+  getNotificationX,
+  sendNotification,
+} from "./CustomerNotification";
+
+const mockAxios = new MockAdapter(axios);
 
 afterEach(() => {
-  // cleaning up the mess left behind the previous test
   mockAxios.reset();
 });
 
@@ -38,29 +47,42 @@ describe("getNotificationX", () => {
 });
 
 describe("sendNotification", () => {
+  let fakeCallbackUrl = "http://test.com";
+  let fakeApiKey = "test-api-key";
   it("should return a Right when it succeeds", async () => {
-    let thenFn1 = jest.fn();
-    let fakeCallbackUrl = "http://test.com";
-    let fakeApiKey = "test-api-key";
-    mockAxios.mockResponse({ status: 200, data: {} });
-    const promise = sendNotification(
+    mockAxios.onPost(fakeCallbackUrl).reply(200, "");
+    const result = await sendNotification(
       createFakeNotification("PaymentFailedNotification"),
       fakeCallbackUrl,
       fakeApiKey
     )();
-    expect(mockAxios.post).toHaveBeenCalledWith("/web-service-url/");
-
-    // simulating a server response
-    const responseObj = { data: "server says hello!" };
-    mockAxios.mockResponse(responseObj);
-    const result = await promise;
-
-    expect(result._tag).toEqual("Right")
+    expect(result._tag).toBe("Right");
   });
-  it("should return a Left when sending timeouts", async () => {});
+  it("should return a Left when sending timeouts", async () => {
+    const result = await sendNotification(
+      createFakeNotification("PaymentFailedNotification"),
+      fakeCallbackUrl,
+      fakeApiKey
+    )();
+    expect(result._tag).toBe("Left");
+  });
 });
 
-describe("attemptSendNotification", () => {
-  it("should mark a notification received if notification is successfully acknowledged", async () => {});
+describe("Send notification flow", () => {
+  it("should mark a notification received if notification is successfully acknowledged", async () => {
+    const apiKey = await createApiKey({ customerId: "test "})();
+    const regCallback = await registerCallback("test", { type: "PaymentFailedNotification", callbackUrl: "http://test.com" });
+    
+    // console.log(result);
+    // const result = await attemptSendNotification(
+    //   "",
+    //   "",
+    //   "",
+    //   "",
+    //   createFakeNotification("PaymentFailedNotification"),
+    //   []
+    // )();
+    // console.log(result);
+  });
   it("should not send a notification when it reached its attempt limit", async () => {});
 });

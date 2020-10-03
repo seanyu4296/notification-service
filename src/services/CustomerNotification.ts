@@ -77,7 +77,7 @@ export function sendNotification(
   );
 }
 
-function attemptSendNotification(
+export function attemptSendNotification(
   apiKey: string,
   customerId: string,
   notificationId: string,

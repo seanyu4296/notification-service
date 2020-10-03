@@ -1,4 +1,5 @@
 module.exports = {
+  "preset": "jest-dynalite",
   "roots": [
     "<rootDir>/src"
   ],

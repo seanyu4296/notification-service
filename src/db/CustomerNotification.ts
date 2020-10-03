@@ -4,7 +4,6 @@ import { pipe } from "fp-ts/lib/function";
 import { AppM, internalErr } from "../types";
 import { NotificationX } from "../types";
 import KSUID from "ksuid";
-import { stringType } from "aws-sdk/clients/iam";
 
 export interface CreateNotificationI {
   notification: NotificationX;
@@ -39,7 +38,7 @@ export function createNotification(props: CreateNotificationI) {
             {
               returnValues: "all_new",
             }
-          ).then((res) => {
+          ).then((res: any) => {
             return res.Attributes;
           });
         },
@@ -75,7 +74,7 @@ export function consNotificationAttempt(
             ":empty_list": [],
           },
         }
-      ).then((res) => res.Attributes);
+      ).then((res: any) => res.Attributes);
     },
     () => {
       return internalErr;
@@ -99,7 +98,7 @@ export function markNotificationReceived(
         {
           returnValues: "all_new",
         }
-      ).then((res) => res.Attributes);
+      ).then((res: any) => res.Attributes);
     },
     () => {
       return internalErr;
@@ -110,7 +109,7 @@ export function markNotificationReceived(
 export function getFailedNotifications(): Promise<CustomerNotification[]> {
   return NotificationTable.query("true", {
     index: "GSI1",
-  }).then((result) => {
+  }).then((result: any) => {
     if (result && result.Items) {
       return result.Items;
     } else {
@@ -129,5 +128,5 @@ export function removeShouldNotify(customerId: string, notificationId: string): 
     {
       returnValues: "all_new",
     }
-  ).then((res) => res.Attributes);
+  ).then((res: any) => res.Attributes);
 }
