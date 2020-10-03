@@ -22,6 +22,7 @@ export const NotificationTable = new Table({
   DocumentClient,
   indexes: {
     GSI2: { partitionKey: "apiKey" },
+    GSI1: { partitionKey: "shouldNotify" }
   },
 });
 
@@ -62,6 +63,7 @@ export const CustomerNotificationE = new Entity({
     notification: { type: "map" },
     attempts: { type: "list" },
     received: { type: "string" },
+    shouldNotify: { type: "string"}
   },
   table: NotificationTable,
 });

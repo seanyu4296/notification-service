@@ -1,21 +1,10 @@
-import { Task } from "fp-ts/lib/Task";
-import { TaskEither } from "fp-ts/lib/TaskEither";
-import * as t from "io-ts";
-import { CustomerNotification, CustomerNotificationE } from "./db";
+import { CustomerNotification, CustomerNotificationE, NotificationTable } from "./db";
 import * as TE from "fp-ts/lib/TaskEither";
-import { flow, pipe } from "fp-ts/lib/function";
-import { Json, mapLeft } from "fp-ts/lib/Either";
-import {
-  AppM,
-  ServerError,
-  badReq,
-  internalErr,
-  NotificationType,
-  notificationTypes,
-} from "../types";
-import { generateToken } from "../utils";
+import { pipe } from "fp-ts/lib/function";
+import { AppM, internalErr } from "../types";
 import { NotificationX } from "../types";
 import KSUID from "ksuid";
+import { stringType } from "aws-sdk/clients/iam";
 
 export interface CreateNotificationI {
   notification: NotificationX;
@@ -34,7 +23,6 @@ export function createUid(): AppM<string> {
   );
 }
 
-
 export function createNotification(props: CreateNotificationI) {
   return pipe(
     createUid(),
@@ -46,6 +34,7 @@ export function createNotification(props: CreateNotificationI) {
               customerId: props.customerId,
               notificationId: uid,
               notification: props.notification,
+              shouldNotify: "true",
             },
             {
               returnValues: "all_new",
@@ -54,14 +43,13 @@ export function createNotification(props: CreateNotificationI) {
             return res.Attributes;
           });
         },
-        (err) => {
+        (error) => {
           return internalErr;
         }
       )
     )
   );
 }
-
 
 export function consNotificationAttempt(
   customerId: string,
@@ -89,7 +77,7 @@ export function consNotificationAttempt(
         }
       ).then((res) => res.Attributes);
     },
-    (err) => {
+    () => {
       return internalErr;
     }
   );
@@ -98,22 +86,48 @@ export function consNotificationAttempt(
 export function markNotificationReceived(
   customerId: string,
   notificationId: string
-) {
+): AppM<CustomerNotification> {
   return TE.tryCatch(
     (): Promise<CustomerNotification> => {
       return CustomerNotificationE.update(
         {
           customerId,
           notificationId,
-          received: new Date().toISOString()
+          received: new Date().toISOString(),
+          $remove: ["shouldNotify"],
         },
         {
           returnValues: "all_new",
-        },
+        }
       ).then((res) => res.Attributes);
     },
-    (err) => {
+    () => {
       return internalErr;
     }
   );
+}
+
+export function getFailedNotifications(): Promise<CustomerNotification[]> {
+  return NotificationTable.query("true", {
+    index: "GSI1",
+  }).then((result) => {
+    if (result && result.Items) {
+      return result.Items;
+    } else {
+      return[];
+    }
+  });
+}
+
+export function removeShouldNotify(customerId: string, notificationId: string): Promise<CustomerNotification> {
+  return CustomerNotificationE.update(
+    {
+      customerId,
+      notificationId,
+      $remove: ["shouldNotify"],
+    },
+    {
+      returnValues: "all_new",
+    }
+  ).then((res) => res.Attributes);
 }

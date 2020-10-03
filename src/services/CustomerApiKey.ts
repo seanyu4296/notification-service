@@ -1,11 +1,9 @@
-import { Task } from "fp-ts/lib/Task";
-import { TaskEither } from "fp-ts/lib/TaskEither";
 import * as t from "io-ts";
 import * as CustomerApiKeyDB from "../db/CustomerApiKey";
 import * as TE from "fp-ts/lib/TaskEither";
-import { flow, pipe } from "fp-ts/lib/function";
+import { pipe } from "fp-ts/lib/function";
 import { Json, mapLeft } from "fp-ts/lib/Either";
-import { AppM, ServerError, badReq, internalErr } from "../types";
+import { AppM, badReq } from "../types";
 import { generateToken } from "../utils";
 
 export const CustomerApiKeyCreateIO = t.type({
@@ -28,8 +26,6 @@ export function generateCreateApiKey({
     TE.chain((token) => TE.of({ customerId, apiKey: token }))
   );
 }
-
-// Move to Db/CustomerApiKey
 
 export function createApiKey(payload: Json): AppM<{ apiKey: string }> {
   return pipe(

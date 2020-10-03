@@ -117,6 +117,3 @@ export function registerCallback(customerId: string, payload: Json) {
     )
   );
 }
-
-// TODO: create an authorization function that returns customer id
-// TODO: a service can send a notification

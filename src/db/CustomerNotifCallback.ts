@@ -1,18 +1,10 @@
-import { Task } from "fp-ts/lib/Task";
-import { TaskEither } from "fp-ts/lib/TaskEither";
-import * as t from "io-ts";
 import { CustomerNotifCallack, CustomerNotifCallbackE } from "./db";
 import * as TE from "fp-ts/lib/TaskEither";
-import { flow, pipe } from "fp-ts/lib/function";
-import { Json, mapLeft } from "fp-ts/lib/Either";
 import {
   AppM,
-  ServerError,
-  badReq,
   internalErr,
   NotificationType,
 } from "../types";
-import { generateToken } from "../utils";
 import { none, Option, some } from "fp-ts/lib/Option";
 
 export interface RegisterCallbackI {
@@ -31,7 +23,7 @@ export function registerCallback(payload: RegisterCallbackI): AppM<void> {
         return;
       });
     },
-    (err) => {
+    () => {
       return internalErr;
     }
   );
@@ -52,7 +44,7 @@ export function getCallbackUrl(
         }
       );
     },
-    (err) => {
+    () => {
       return internalErr;
     }
   );

@@ -6,8 +6,6 @@ import * as CustomerNotifCallback from "./services/CustomerNotifCallback";
 import * as CustomerNotification from "./services/CustomerNotification";
 import * as TE from "fp-ts/lib/TaskEither";
 import { pipe } from "fp-ts/lib/function";
-import { fold } from "fp-ts/lib/Either";
-import { NotificationTable } from "./db/db";
 import { authorize } from "./services/Auth";
 
 const app: express.Application = express();
@@ -23,7 +21,8 @@ app.post("/register", async function (req, res) {
       authorize(req.headers),
       TE.chain(({ customerId }) =>
         CustomerNotifCallback.registerCallback(customerId, req.body)
-      )
+      ),
+//      TE.apSecon
     )
   );
   sendOut(res, result);
