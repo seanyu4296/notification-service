@@ -57,7 +57,7 @@ export function getNotificationX(payload: Json): AppM<NotificationX> {
   return TE.left(badReq);
 }
 
-function sendNotification(
+export function sendNotification(
   notification: NotificationX,
   callbackUrl: string,
   apiKey: string

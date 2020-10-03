@@ -19,7 +19,7 @@ export function registerCallback(payload: RegisterCallbackI): AppM<void> {
       return CustomerNotifCallbackE.update(payload, {
         returnValues: "none",
         conditions: [],
-      }).then((_) => {
+      }).then((res: any) => {
         return;
       });
     },
@@ -36,7 +36,7 @@ export function getCallbackUrl(
   return TE.tryCatch(
     (): Promise<Option<CustomerNotifCallack>> => {
       return CustomerNotifCallbackE.get({ customerId, notificationType }).then(
-        (res) => {
+        (res: any) => {
           if(res && res.Item) {
             return some(res.Item)
           }

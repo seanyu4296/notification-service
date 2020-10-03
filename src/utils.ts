@@ -20,6 +20,7 @@ import {
   internalErr,
   NotificationType,
   NotificationTypeIO,
+  NotificationX,
   ServerError,
 } from "./types";
 import { Response } from "express";
@@ -78,5 +79,27 @@ export function generateToken(): AppM<string> {
 }
 
 export function generateHmacSha256(key: string, payload: string): string {
-  return crypto.createHmac('sha256', key).update(payload).digest("base64");
+  return crypto.createHmac("sha256", key).update(payload).digest("base64");
+}
+
+export function createFakeNotification(nt: NotificationType): NotificationX {
+  switch (nt) {
+    case "PaymentCreatedNotification":
+      return {
+        type: "PaymentCreatedNotification",
+        payload: {
+          id: "fake-id",
+          amount: 10000,
+        },
+      };
+    case "PaymentFailedNotification":
+      return {
+        type: "PaymentFailedNotification",
+        payload: {
+          id: "fake-id",
+          amount: 100000,
+          cause: "Insufficient Funds",
+        },
+      };
+  }
 }

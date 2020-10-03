@@ -18,29 +18,8 @@ import {
   NotificationTypeIO,
 } from "../types";
 import Axios from "axios";
-import { toNotificationType } from "../utils";
+import { createFakeNotification, toNotificationType } from "../utils";
 
-function createFakeNotification(nt: NotificationType): NotificationX {
-  switch (nt) {
-    case "PaymentCreatedNotification":
-      return {
-        type: "PaymentCreatedNotification",
-        payload: {
-          id: "fake-id",
-          amount: 10000,
-        },
-      };
-    case "PaymentFailedNotification":
-      return {
-        type: "PaymentFailedNotification",
-        payload: {
-          id: "fake-id",
-          amount: 100000,
-          cause: "Insufficient Funds",
-        },
-      };
-  }
-}
 
 
 
